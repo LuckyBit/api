@@ -3,24 +3,59 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to LuckyBit API documentation!
-======================================================
+Welcome to the LuckyBit API documentation!
+=======================================================
 
 This is the API documentation for LuckyBit - http://luckyb.it
 
 Introduction
 ------------
 
+The LuckyBit API allows read-only access to the LuckyBit database.
+It aims at facilitating the creation of tools such as betting bots, verifiers
+and other add-on software.
+
+The API is a REST API using JSON as dataformat. It is available anonymously
+and does not require identification or authentification.
+
+This documentation has also been published at: https://github.com/LuckyBit/api
+
+Example
+-------
+
+An example script has been published here: https://github.com/LuckyBit/bet-verifier
+This script shows how to compute the hashes of a bet in order to prove that
+any given bet is provably fair. The script uses this API and http://blockchain.info
+for an impartial data source.
+
 Querying games
 --------------
 
-/api/getgames
-^^^^^^^^^^^^^
+Allows to query for active games. There are three active games at
+any moment in time, namely *green*, *yellow*, and *red*. Other games
+(different multipliers, special offers etc) are not listed.
+
+Returns a dictionary of all three active games. Every game is identified by it's name.
+It has an ``address``, which is the game's associated bitcoin address, a ``min_amount``
+and ``max_amount``, which express the game's valid range for betting in bitcoin, a list of 
+``multipliers``, ordered by ``rank`` (*rank = 0* is in the middle and *rank = 8* is
+at the border of the multiplier bar).
+
+Getting all games
+^^^^^^^^^^^^^^^^^
+
+URL scheme: ``http://luckyb.it/api/getgames``
+
+Returns a dictionary of all three active games.
+
+Example call for querying (command line):
 
 ::
   
   curl http://luckyb.it/api/getgames
   
+
+Example return data (JSON):
 
 ::
   
@@ -46,13 +81,22 @@ Querying games
   }
   
 
-/api/getgamebyname/<name>
+Get specific game by name
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+URL scheme: ``http://luckyb.it/api/getgamebyname/<name>``
+
+Returns the game with the name ``name``. 
+Returns ``{}`` if no game by this name found.
+
+Example call for querying (command line):
 
 ::
   
   curl http://luckyb.it/api/getgamebyname/red
   
+
+Example return data (JSON):
 
 ::
   
@@ -79,14 +123,45 @@ Querying games
 Querying bets
 -------------
 
-/api/getbetsbyaddress/<address>
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Allows to query bets from LuckyBit. Only bets that have been published (i.e., displayed
+on the website) are listed.
+
+In general, bets are identified by ``txid:vout``, with ``txid`` being the transaction id
+and ``vout`` being the number of the output in the description.
+
+Field description:
+ * ``bet_amount``: amount of bet, in bitcoin
+ * ``binary_string``: movement of coin in triangle encoded as *0 = left* and *1 = right*
+ * ``created_at``: timestamp of creation
+ * ``game_address``: address of the game the bet was sent to
+ * ``game_name``: name of the game the bet was sent to
+ * ``multiplier_obtained``: multiplier obtained by the bet (depends on game)
+ * ``payout_amount``: payout amount in bitcoin
+ * ``player_address``: address from which the bet was sent from
+ * ``txin_id``: transaction id of bet
+ * ``txin_vout``: vout of bet in transaction ``txin_id``
+ * ``txout_id``: id of payout transaction
+ * ``type``: type of bet, either ``VALID_BET`` or ``INVALID_MIN`` or ``INVALID_MAX``
+
+
+
+Get bets by sender address
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+URL scheme: ``http://luckyb.it/api/getbetsbyaddress/<address>``
+
+Gets all bets sent from the specific bitcoin address ``address``. Returns a dictionary in which
+bets are identified by ``txid:vout``.
+
+Example call for querying (command line):
 
 ::
   
   curl http://luckyb.it/api/getbetsbyaddress/1JHP6cCrn7CzMDvMkqne77k6qUVq9DteoB
   
 
+Example return data (JSON):
+
 ::
   
   {
@@ -112,14 +187,22 @@ Querying bets
   
 
 
-/api/getbetsbytxid/<txid>
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Get bets by transaction id
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+URL scheme: ``http://luckyb.it/api/getbetsbytxid/<txid>``
+
+Gets all bets sent in a specific bitcoin transaction, identified by ``txid``.
+Returns a dictionary in which bets are identified by ``txid:vout``.
+
+Example call for querying (command line):
 
 ::
   
   curl http://luckyb.it/api/getbetsbytxid/laec4a5bfdf5de4e40f875b4fc7b5a08d0c82e01966a718790daa519e6e80fff
   
 
+Example return data (JSON):
 
 ::
   
@@ -145,13 +228,26 @@ Querying bets
   }
   
 
-/api/getbetbytxidvout/<txidvout>
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Get single bet by txit:vout
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+URL scheme: ``http://luckyb.it/api/getbetbytxidvout/<txid>:<vout>``
+
+Gets a single bet, that is, a specific vout in a specific transaction, identified by ``txid:vout``.
+Returns a dictionary in which bets are identified by ``txid:vout``.
+
+.. NOTE::
+  This call gets a single bet, and is called therefore ``/api/getbet`` rather than ``/api/getbets``
+
+
+Example call for querying (command line):
 
 ::
   
   curl http://luckyb.it/api/getbetbytxidvout/1aec4a5bfdf5de4e40f875b4fc7b5a08d0c82e01966a718790daa519e6e80fff:3 
   
+
+Example return data (JSON):
 
 ::
   
@@ -176,13 +272,25 @@ Querying bets
 Querying keys and hashes
 ------------------------
 
-/api/getcurrenthash
-^^^^^^^^^^^^^^^^^^^
+Allows to query secret keys and their hashes. All secret keys
+are strings 64 characters long. Hashes are SHA256 hashes of
+these strings.
+
+Get todays hash
+^^^^^^^^^^^^^^^
+
+URL scheme: ``http://luckyb.it/api/getcurrenthash``
+
+Returns the hash of the currently used secret key, identified by the date.
+
+Example call for querying (command line):
 
 ::
   
   curl http://luckyb.it/api/getcurrenthash
   
+
+Example return data (JSON):
 
 ::
   
@@ -191,13 +299,21 @@ Querying keys and hashes
   }
   
 
-/api/gethashbydate/<date>
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Get hash by date 
+^^^^^^^^^^^^^^^^
+
+URL scheme: ``http://luckyb.it/api/gethashbydate/<date>``
+
+Returns the hash of the day ``date``, identified by the date.
+
+Example call for querying (command line):
 
 ::
   
   curl http://luckyb.it/api/gethashbydate/2013-11-13
   
+
+Example return data (JSON):
 
 ::
   
@@ -206,18 +322,35 @@ Querying keys and hashes
   }
   
 
-/api/getkeybydate/<date>
-^^^^^^^^^^^^^^^^^^^^^^^^
+Get secret key by date
+^^^^^^^^^^^^^^^^^^^^^^
 
+URL scheme: ``http://luckyb.it/api/getkeybydate/<date>``
+
+Returns the secret key of the day ``date``, identified by the date.
+
+.. NOTE::
+  You can only query the secret keys starting from yesterday.
+
+Example call for querying (command line):
 
 ::
   
   curl http://luckyb.it/api/getkeybydate/2013-11-13
   
 
+Example return data (JSON):
+
 ::
   
   {
     "2013-11-13": "f8cbabfe1d051eca2ee607477d35ed3271e2fd39354f09b79187c8af7694c959"
   }
-  
+ 
+Contact
+-------
+
+ * Follow us on Twitter: https://twitter.com/LuckyBitGame
+ * Bitcointalk support thread: https://bitcointalk.org/index.php?topic=322158.0
+ * LuckyBit support: support@luckyb.it
+
