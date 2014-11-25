@@ -31,11 +31,12 @@ for an impartial data source.
 Querying games
 --------------
 
-Allows to query for active games. There are three active games at
-any moment in time, namely *green*, *yellow*, and *red*. Other games
+Allows to query for active games. There are at least four active games at
+any moment in time, namely *blue*, *green*, *yellow*, and *red*. A special 
+*promo* game might be active and thus listed for special occasions. Non-active games
 (different multipliers, special offers etc) are not listed.
 
-Returns a dictionary of all three active games. Every game is identified by it's name.
+Returns a dictionary of all active games. Every game is identified by it's name.
 It has an ``address``, which is the game's associated bitcoin address, a ``min_amount``
 and ``max_amount``, which express the game's valid range for betting in bitcoin, a list of 
 ``multipliers``, ordered by ``rank`` (*rank = 0* is in the middle and *rank = 8* is
@@ -60,6 +61,7 @@ Example return data (JSON):
 ::
   
   {
+    "blue": {...},
     "green": {
       "address": "1LuckyG4tMMZf64j6ea7JhCz7sDpk6vdcS", 
       "max_amount": 1.0, 
@@ -124,7 +126,7 @@ Querying bets
 -------------
 
 Allows to query bets from LuckyBit. Only bets that have been published (i.e., displayed
-on the website) are listed.
+on the website) are listed. 
 
 In general, bets are identified by ``txid:vout``, with ``txid`` being the transaction id
 and ``vout`` being the number of the output in the description.
@@ -144,6 +146,61 @@ Field description:
  * ``type``: type of bet, either ``VALID_BET`` or ``INVALID_MIN`` or ``INVALID_MAX``
 
 
+Result pagination
+^^^^^^^^^^^^^^^^^
+
+Bet results are paginated, that is, at maximum LuckyBit returns 200 bets on one ``page`` of results. Developers have to select pages in order to browse through all available results.
+
+Parameter description:
+ * ``limit``: limit the amount of values returned (min 1, max 200)
+ * ``page``: allows to access a certain page of the result set
+
+In case the last page has been surpassed, LuckyBit returns an empty result set (``{}``).
+
+Example parameters that return the results 61-70 of all bets:
+
+::
+
+  curl http://luckyb.it/api/getbets?limit=10&page=6
+
+
+Get all bets
+^^^^^^^^^^^^
+
+URL scheme: ``http://luckyb.it/api/getbets``
+
+Gets all bets. Returns a dictionary in which bets are identified by ``txid:vout``.
+
+Example call for querying (command line):
+
+::
+  
+  curl http://luckyb.it/api/getbets
+    
+
+Example return data (JSON):
+
+::
+  
+  {
+    "0a7746ffb8f4afaf06832dfd4de205ed23f85fb40adb4d71509e0520b66b4eae:0": {
+      "bet_amount": 0.00528974, 
+      "binary_string": "1110000001110100", 
+      "created_at": "2014-11-25 19:16:30", 
+      "game_address": "1LuckyY9fRzcJre7aou7ZhWVXktxjjBb9S", 
+      "game_name": "yellow", 
+      "multiplier_obtained": 0.5, 
+      "payout_amount": 0.00264487, 
+      "player_address": "1CzpDGmLu1yeEFa9qquMVpDUhNv9gKoR7S", 
+      "txin_id": "0a7746ffb8f4afaf06832dfd4de205ed23f85fb40adb4d71509e0520b66b4eae", 
+      "txin_vout": 0, 
+      "txout_id": "c6373983dc4f8015fb435f22a95e398fb0c85155d3e5e2363b3c8bfd1ee28785", 
+      "type": "VALID_BET"
+    }, 
+    [...]
+  }
+
+
 
 Get bets by sender address
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -152,6 +209,13 @@ URL scheme: ``http://luckyb.it/api/getbetsbyaddress/<address>``
 
 Gets all bets sent from the specific bitcoin address ``address``. Returns a dictionary in which
 bets are identified by ``txid:vout``.
+
+.. NOTE::
+  You can search by substring, that is, it is sufficient to specify a 
+  part of the ``address`` you are looking for.
+
+.. NOTE::
+  The search is case-sensitive.
 
 Example call for querying (command line):
 
@@ -194,6 +258,13 @@ URL scheme: ``http://luckyb.it/api/getbetsbytxid/<txid>``
 
 Gets all bets sent in a specific bitcoin transaction, identified by ``txid``.
 Returns a dictionary in which bets are identified by ``txid:vout``.
+
+.. NOTE::
+  You can search by substring, that is, it is sufficient to specify a 
+  part of the ``txid`` you are looking for.
+
+.. NOTE::
+  The search is case-sensitive.
 
 Example call for querying (command line):
 
@@ -239,6 +310,8 @@ Returns a dictionary in which bets are identified by ``txid:vout``.
 .. NOTE::
   This call gets a single bet, and is called therefore ``/api/getbet`` rather than ``/api/getbets``
 
+.. NOTE::
+  The search is case-sensitive.
 
 Example call for querying (command line):
 
@@ -266,6 +339,44 @@ Example return data (JSON):
       "txout_id": "bb58d6ae2fa02a04b819bc7422d1210f32a69da25c994389bc07e9ec531aac44", 
       "type": "VALID_BET"
     }
+  }
+  
+
+Get bets by date
+^^^^^^^^^^^^^^^^
+
+URL scheme: ``http://luckyb.it/api/getbetsdate/<date>``
+
+Gets all bets sent on a specific date, identified by ``date`` using the format ``YYYY-MM-DD``
+Returns a dictionary in which bets are identified by ``txid:vout``.
+
+Example call for querying (command line):
+
+::
+  
+  curl http://luckyb.it/api/getbetsbydate/2013-12-31
+
+
+Example return data (JSON):
+
+::
+
+  {
+    "0005a10e440fb736d307f1c275be46ad3769ff9738f726703424ea3a1aea8f62:0": {
+      "bet_amount": 0.001, 
+      "binary_string": "1100110011111110", 
+      "created_at": "2013-12-31 04:25:15", 
+      "game_address": "1LuckyR1fFHEsXYyx5QK4UFzv3PEAepPMK", 
+      "game_name": "red", 
+      "multiplier_obtained": 2, 
+      "payout_amount": 0.002, 
+      "player_address": "1Bqbu2rgJVWfw1aAw3VM98JBkNdE9Cuw4G", 
+      "txin_id": "0005a10e440fb736d307f1c275be46ad3769ff9738f726703424ea3a1aea8f62", 
+      "txin_vout": 0, 
+      "txout_id": "a6ca48610622db2cc1a34a0ba527008bfac5c349f4208b0cb070c6d9aa1ae30d", 
+      "type": "VALID_BET"
+    }, 
+    [...]
   }
   
 
@@ -327,7 +438,7 @@ Get secret key by date
 
 URL scheme: ``http://luckyb.it/api/getkeybydate/<date>``
 
-Returns the secret key of the day ``date``, identified by the date.
+Returns the secret key of a specific date, identified by ``date`` using the format ``YYYY-MM-DD``
 
 .. NOTE::
   You can only query the secret keys starting from yesterday.
@@ -347,6 +458,7 @@ Example return data (JSON):
     "2013-11-13": "f8cbabfe1d051eca2ee607477d35ed3271e2fd39354f09b79187c8af7694c959"
   }
  
+
 Contact
 -------
 
