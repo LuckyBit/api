@@ -463,6 +463,6 @@ Contact
 -------
 
  * Follow us on Twitter: https://twitter.com/LuckyBitGame
- * Bitcointalk support thread: https://bitcointalk.org/index.php?topic=322158.0
+ * Bitcointalk support thread: https://bitcointalk.org/index.php?topic=757624
  * LuckyBit support: support@luckyb.it
 
