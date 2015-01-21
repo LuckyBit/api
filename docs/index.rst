@@ -149,10 +149,10 @@ Field description:
 Result pagination
 ^^^^^^^^^^^^^^^^^
 
-Bet results are paginated, that is, at maximum LuckyBit returns 200 bets on one ``page`` of results. Developers have to select pages in order to browse through all available results.
+Bet results are paginated, that is, at maximum LuckyBit returns 100 bets on one ``page`` of results. Developers have to select pages in order to browse through all available results.
 
 Parameter description:
- * ``limit``: limit the amount of values returned (min 1, max 200)
+ * ``limit``: limit the amount of values returned (min 1, max 100)
  * ``page``: allows to access a certain page of the result set
 
 In case the last page has been surpassed, LuckyBit returns an empty result set (``{}``).
